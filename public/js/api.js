@@ -50,7 +50,8 @@ function checkAuth() {
         `;
     } else {
         document.getElementById('auth-links').innerHTML = `
-            <a href="/login">Đăng nhập</a>
+            <a href="/login">Đăng nhập</a> |
+            <a href="/register">Tạo tài khoản</a>
         `;
     }
 }
