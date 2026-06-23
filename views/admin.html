@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <h1><a href="/">Quản trị Hệ thống</a></h1>
+        <div id="auth-links"></div>
+    </header>
+
+    <div class="container">
+        <h2>Thống kê</h2>
+        <div class="book-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="book-card">
+                <h3>Tổng số Sách</h3>
+                <h2 id="stat-books">0</h2>
+            </div>
+            <div class="book-card">
+                <h3>Tổng lượt Xem</h3>
+                <h2 id="stat-views">0</h2>
+            </div>
+            <div class="book-card">
+                <h3>Tổng Bình luận</h3>
+                <h2 id="stat-comments">0</h2>
+            </div>
+        </div>
+
+        <hr style="margin: 30px 0;">
+        <h2>Quản lý Sách</h2>
+        <form id="add-book-form" style="background: white; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; border-radius: 4px;">
+            <div class="form-group"><label>Tiêu đề</label><input type="text" id="ab-title" required></div>
+            <div class="form-group"><label>Tác giả</label><input type="text" id="ab-author" required></div>
+            <div class="form-group"><label>Mô tả</label><textarea id="ab-desc" rows="3"></textarea></div>
+            <button type="submit" class="btn btn-primary">Thêm sách mới</button>
+        </form>
+        
+        <div style="overflow-x:auto;">
+            <table id="admin-books-table">
+                <thead>
+                    <tr><th>ID</th><th>Tiêu đề</th><th>Tác giả</th><th>Lượt xem</th><th>Trạng thái</th><th>Hành động</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <hr style="margin: 30px 0;">
+        <h2>Quản lý Bình luận</h2>
+        <div style="overflow-x:auto;">
+            <table id="admin-comments-table">
+                <thead>
+                    <tr><th>Sách</th><th>Người đăng</th><th>Nội dung</th><th>Điểm</th><th>Hành động</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const userStr = localStorage.getItem('user');
+            if(!userStr || JSON.parse(userStr).role !== 'admin') {
+                alert('Không có quyền truy cập!');
+                window.location.href = '/';
+                return;
+            }
+            checkAuth();
+            loadStats();
+            loadAdminBooks();
+            loadAdminComments();
+        });
+
+        async function loadStats() {
+            const stats = await apiGet('/admin/stats');
+            document.getElementById('stat-books').innerText = stats.total_books || 0;
+            document.getElementById('stat-views').innerText = stats.total_views || 0;
+            document.getElementById('stat-comments').innerText = stats.total_comments || 0;
+        }
+
+        async function loadAdminBooks() {
+            const books = await apiGet('/books');
+            const tbody = document.querySelector('#admin-books-table tbody');
+            tbody.innerHTML = '';
+            books.forEach(b => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${b.id}</td>
+                        <td>${b.title}</td>
+                        <td>${b.author}</td>
+                        <td>${b.view_count}</td>
+                        <td>${b.status}</td>
+                        <td>
+                            <button class="btn btn-danger" onclick="deleteBook(${b.id})">Xóa</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function loadAdminComments() {
+            const comments = await apiGet('/admin/comments');
+            const tbody = document.querySelector('#admin-comments-table tbody');
+            tbody.innerHTML = '';
+            comments.forEach(c => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${c.book_title}</td>
+                        <td>${c.username}</td>
+                        <td>${c.content}</td>
+                        <td>${c.rating}</td>
+                        <td>
+                            <button class="btn btn-danger" onclick="deleteComment(${c.id})">Xóa</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        document.getElementById('add-book-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await apiPost('/admin/books', {
+                title: document.getElementById('ab-title').value,
+                author: document.getElementById('ab-author').value,
+                description: document.getElementById('ab-desc').value,
+                status: 'available'
+            });
+            e.target.reset();
+            loadAdminBooks();
+            loadStats();
+        });
+
+        async function deleteBook(id) {
+            if(confirm('Chắc chắn xóa cuốn sách này?')) {
+                await apiDelete('/admin/books/' + id);
+                loadAdminBooks();
+                loadStats();
+            }
+        }
+
+        async function deleteComment(id) {
+            if(confirm('Chắc chắn xóa bình luận này?')) {
+                await apiDelete('/admin/comments/' + id);
+                loadAdminComments();
+                loadStats();
+            }
+        }
+    </script>
+</body>
+</html>

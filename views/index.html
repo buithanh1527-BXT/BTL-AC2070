@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Management</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>Thư viện Online</h1>
+        <div id="auth-links"></div>
+    </header>
+
+    <div class="container">
+        <h2>Danh sách Sách</h2>
+        <div id="book-list" class="book-grid">
+            <!-- Sách sẽ load ở đây -->
+        </div>
+    </div>
+
+    <div id="ad-popup" class="popup-overlay">
+        <div class="popup-content">
+            <h2>Khuyến mãi</h2>
+            <p>Mượn 3 sách tặng 1 sách! Nhanh tay đăng ký.</p>
+            <button class="btn btn-danger" onclick="closePopup()">Đóng</button>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/main.js"></script>
+</body>
+</html>

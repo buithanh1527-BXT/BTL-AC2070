@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết Sách</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <h1><a href="/">Thư viện Online</a></h1>
+        <div id="auth-links"></div>
+    </header>
+
+    <div class="container" id="book-detail">
+        <h2 id="b-title">Đang tải...</h2>
+        <p><strong>Tác giả:</strong> <span id="b-author"></span></p>
+        <p><strong>Lượt xem:</strong> <span id="b-views"></span></p>
+        <p><strong>Trạng thái:</strong> <span id="b-status"></span></p>
+        <p id="b-desc"></p>
+        <hr>
+        
+        <h3>Bình luận & Đánh giá</h3>
+        <form id="comment-form">
+            <input type="hidden" id="book_id">
+            <div class="form-group">
+                <label>Tên của bạn</label>
+                <input type="text" id="c-username" required>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="c-email" required>
+            </div>
+            <div class="form-group">
+                <label>Nội dung</label>
+                <textarea id="c-content" rows="3" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Điểm đánh giá (1-5)</label>
+                <input type="number" id="c-rating" min="1" max="5" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Gửi Bình luận</button>
+        </form>
+        
+        <div id="comments-list" style="margin-top: 20px;"></div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            checkAuth();
+            const urlParams = new URLSearchParams(window.location.search);
+            const bookId = urlParams.get('id');
+            if(!bookId) return;
+            
+            document.getElementById('book_id').value = bookId;
+
+            const book = await apiGet('/books/' + bookId);
+            if(book.message) return alert(book.message);
+            
+            document.getElementById('b-title').innerText = book.title;
+            document.getElementById('b-author').innerText = book.author;
+            document.getElementById('b-views').innerText = book.view_count;
+            document.getElementById('b-status').innerText = book.status === 'available' ? 'Có sẵn' : 'Đang mượn';
+            document.getElementById('b-desc').innerText = book.description;
+
+            loadComments(bookId);
+        });
+
+        async function loadComments(bookId) {
+            const comments = await apiGet('/comments/book/' + bookId);
+            const list = document.getElementById('comments-list');
+            list.innerHTML = '';
+            comments.forEach(c => {
+                list.innerHTML += `
+                    <div style="background: white; padding: 15px; margin-bottom: 15px; border: 1px solid var(--border); border-radius: 4px;">
+                        <strong>${c.username} (${c.email})</strong> - Đánh giá: ${c.rating}⭐
+                        <p style="margin-top: 5px;">${c.content}</p>
+                    </div>
+                `;
+            });
+        }
+
+        document.getElementById('comment-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                book_id: document.getElementById('book_id').value,
+                username: document.getElementById('c-username').value,
+                email: document.getElementById('c-email').value,
+                content: document.getElementById('c-content').value,
+                rating: document.getElementById('c-rating').value
+            };
+            await apiPost('/comments', data);
+            loadComments(data.book_id);
+            e.target.reset();
+        });
+    </script>
+</body>
+</html>
