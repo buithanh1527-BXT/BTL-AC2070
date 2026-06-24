@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký thẻ thư viện</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* CSS nội tuyến (Inline CSS) */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f4f7f6;
+            background-image: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .register-container {
+            background-color: #ffffff;
+            width: 100%;
+            max-width: 450px;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .register-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .book-icon {
+            font-size: 40px;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .register-header h2 {
+            color: #2c3e50;
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .register-header p {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #34495e;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #bdc3c7;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        .error-text {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            background-color: #1a252f;
+        }
+
+        .btn-submit:active {
+            transform: translateY(2px);
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+
+        .login-link a {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-header">
+            <i class="fa-solid fa-book-open-reader book-icon"></i>
+            <h2>Đăng ký Thẻ Thư Viện</h2>
+            <p>Tạo tài khoản để khám phá hàng ngàn đầu sách</p>
+        </div>
+        
+        <form id="registerForm" class="register-form">
+            <div class="input-group">
+                <label for="fullname">Họ và tên</label>
+                <input type="text" id="fullname" placeholder="Nhập họ và tên của bạn" required>
+            </div>
+
+            <div class="input-group">
+                <label for="readerId">Mã số sinh viên / Cán bộ</label>
+                <input type="text" id="readerId" placeholder="Nhập mã số của bạn" required>
+            </div>
+
+            <div class="input-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="Nhập địa chỉ email" required>
+            </div>
+
+            <div class="input-group">
+                <label for="password">Mật khẩu</label>
+                <input type="password" id="password" placeholder="Tạo mật khẩu" required>
+            </div>
+
+            <div class="input-group">
+                <label for="confirmPassword">Xác nhận mật khẩu</label>
+                <input type="password" id="confirmPassword" placeholder="Nhập lại mật khẩu" required>
+                <small id="passwordError" class="error-text"></small>
+            </div>
+
+            <button type="submit" class="btn-submit">Đăng ký ngay</button>
+            
+            <p class="login-link">Đã có tài khoản? <a href="#">Đăng nhập tại đây</a></p>
+        </form>
+    </div>
+
+    <script>
+        // JavaScript được nhúng trực tiếp
+        document.addEventListener('DOMContentLoaded', () => {
+            const registerForm = document.getElementById('registerForm');
+            const password = document.getElementById('password');
+            const confirmPassword = document.getElementById('confirmPassword');
+            const passwordError = document.getElementById('passwordError');
+
+            registerForm.addEventListener('submit', function(event) {
+                // Ngăn form tải lại trang
+                event.preventDefault();
+
+                // Kiểm tra mật khẩu
+                if (password.value !== confirmPassword.value) {
+                    passwordError.textContent = 'Mật khẩu xác nhận không khớp!';
+                    passwordError.style.display = 'block';
+                    confirmPassword.style.borderColor = '#e74c3c';
+                } else {
+                    passwordError.style.display = 'none';
+                    confirmPassword.style.borderColor = '#bdc3c7';
+                    
+                    alert('Đăng ký tài khoản thư viện thành công!');
+                    registerForm.reset();
+                }
+            });
+
+            // Ẩn lỗi khi người dùng nhập lại
+            confirmPassword.addEventListener('input', () => {
+                passwordError.style.display = 'none';
+                confirmPassword.style.borderColor = '#bdc3c7';
+            });
+        });
+    </script>
+</body>
+</html>
