@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* CSS nội tuyến (Inline CSS) */
         * {
             margin: 0;
             padding: 0;
@@ -171,7 +170,6 @@
     </div>
 
     <script>
-        // JavaScript được nhúng trực tiếp
         document.addEventListener('DOMContentLoaded', () => {
             const registerForm = document.getElementById('registerForm');
             const password = document.getElementById('password');
@@ -179,10 +177,8 @@
             const passwordError = document.getElementById('passwordError');
 
             registerForm.addEventListener('submit', function(event) {
-                // Ngăn form tải lại trang
                 event.preventDefault();
 
-                // Kiểm tra mật khẩu
                 if (password.value !== confirmPassword.value) {
                     passwordError.textContent = 'Mật khẩu xác nhận không khớp!';
                     passwordError.style.display = 'block';
@@ -196,7 +192,6 @@
                 }
             });
 
-            // Ẩn lỗi khi người dùng nhập lại
             confirmPassword.addEventListener('input', () => {
                 passwordError.style.display = 'none';
                 confirmPassword.style.borderColor = '#bdc3c7';
