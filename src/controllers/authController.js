@@ -1,5 +1,4 @@
 const pool = require('../config/database');
-const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 
 exports.login = async (req, res) => {
@@ -12,7 +11,10 @@ exports.login = async (req, res) => {
         }
         
         const user = rows[0];
-        const passwordIsValid = await bcrypt.compare(password, user.password);
+        
+        // Xác thực mật khẩu bằng crypto thuần
+        const [hashed, salt] = user.password.split(':');
+        const passwordIsValid = crypto.scryptSync(password, salt, 64).toString('hex') === hashed;
         
         if (!passwordIsValid) {
             return res.status(401).json({ message: 'Invalid Password' });
@@ -48,7 +50,11 @@ exports.logout = async (req, res) => {
 exports.register = async (req, res) => {
     try {
         const { username, password, role } = req.body;
-        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        // Băm mật khẩu bằng crypto thuần của Node.js (scrypt)
+        const salt = crypto.randomBytes(16).toString('hex');
+        const hashedPassword = crypto.scryptSync(password, salt, 64).toString('hex') + ':' + salt;
+        
         await pool.query('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [username, hashedPassword, role || 'user']);
         res.status(201).json({ message: 'User registered' });
     } catch (error) {
