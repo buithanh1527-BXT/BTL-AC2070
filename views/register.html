@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Ký Tài Khoản</title>
+    <link rel="stylesheet" href="/css/style.css"> 
+    <style>
+        /* CSS giao diện cơ bản cho form đăng ký */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .register-container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            width: 350px;
+        }
+        .register-container h2 {
+            margin-bottom: 20px;
+            text-align: center;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .btn-register {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            border: none;
+            color: white;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-register:hover {
+            background-color: #218838;
+        }
+        .login-link {
+            text-align: center;
+            margin-top: 15px;
+            display: block;
+            color: #007bff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="register-container">
+    <h2>Đăng Ký</h2>
+    <form id="register-form">
+        <div class="form-group">
+            <label for="username">Tên đăng nhập</label>
+            <input type="text" id="username" required placeholder="Nhập tên đăng nhập">
+        </div>
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" required placeholder="Nhập email của bạn">
+        </div>
+        <div class="form-group">
+            <label for="password">Mật khẩu</label>
+            <input type="password" id="password" required placeholder="Nhập mật khẩu">
+        </div>
+        <div class="form-group">
+            <label for="confirm-password">Xác nhận mật khẩu</label>
+            <input type="password" id="confirm-password" required placeholder="Nhập lại mật khẩu">
+        </div>
+        <button type="submit" class="btn-register">Đăng Ký</button>
+    </form>
+    <a href="/login" class="login-link">Đã có tài khoản? Đăng nhập ngay</a>
+</div>
+
+<script>
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+        e.preventDefault(); // Ngăn chặn form tải lại trang mặc định
+
+        const username = document.getElementById('username').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirm-password').value;
+
+        // Kiểm tra xem mật khẩu nhập lại có khớp không
+        if (password !== confirmPassword) {
+            alert('Mật khẩu xác nhận không trùng khớp!');
+            return;
+        }
+
+        try {
+            // Gửi dữ liệu đăng ký lên Server Backend (Thay đổi URL /api/auth/register cho đúng với route Backend của bạn)
+            const response = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, email, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert('Đăng ký tài khoản thành công!');
+                // Chuyển hướng người dùng về trang đăng nhập sau khi thành công
+                window.location.href = '/login'; 
+            } else {
+                // Hiển thị thông báo lỗi từ server trả về (ví dụ: Tài khoản đã tồn tại)
+                alert(data.message || 'Đăng ký thất bại, vui lòng thử lại!');
+            }
+        } catch (error) {
+            console.error('Lỗi kết nối:', error);
+            alert('Có lỗi xảy ra trong quá trình kết nối đến server!');
+        }
+    });
+</script>
+
+</body>
+</html>
