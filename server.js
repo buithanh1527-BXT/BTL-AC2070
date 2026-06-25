@@ -18,11 +18,13 @@ app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'views', 'logi
 app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'views', 'register.html')));
 app.get('/book-detail', (req, res) => res.sendFile(path.join(__dirname, 'views', 'book-detail.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'views', 'admin.html')));
+app.get('/profile', (req, res) => res.sendFile(path.join(__dirname, 'views', 'profile.html')));
 
 app.use('/api/auth', require('./src/routes/authRoutes'));
 app.use('/api/books', require('./src/routes/bookRoutes'));
 app.use('/api/comments', require('./src/routes/commentRoutes'));
 app.use('/api/admin', require('./src/routes/adminRoutes'));
+app.use('/api/borrows', require('./src/routes/borrowRoutes'));
 
 app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', message: 'Server is running' });

@@ -1,7 +1,6 @@
 const pool = require('../config/database');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
-const { sessions } = require('../middlewares/authMiddleware');
 
 exports.login = async (req, res) => {
     try {
@@ -20,7 +19,7 @@ exports.login = async (req, res) => {
         }
         
         const token = crypto.randomBytes(16).toString('hex');
-        sessions[token] = { id: user.id, username: user.username, role: user.role };
+        await pool.query('UPDATE users SET session_token = ? WHERE id = ?', [token, user.id]);
         
         res.status(200).json({
             id: user.id,
@@ -33,13 +32,17 @@ exports.login = async (req, res) => {
     }
 };
 
-exports.logout = (req, res) => {
-    const token = req.headers['authorization'];
-    if (token) {
-        const tokenStr = token.replace('Bearer ', '');
-        delete sessions[tokenStr];
+exports.logout = async (req, res) => {
+    try {
+        const token = req.headers['authorization'];
+        if (token) {
+            const tokenStr = token.replace('Bearer ', '');
+            await pool.query('UPDATE users SET session_token = NULL WHERE session_token = ?', [tokenStr]);
+        }
+        res.status(200).json({ message: 'Logged out' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
-    res.status(200).json({ message: 'Logged out' });
 };
 
 exports.register = async (req, res) => {

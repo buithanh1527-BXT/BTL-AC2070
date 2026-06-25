@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ sơ cá nhân</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .profile-container { max-width: 1000px; margin: 20px auto; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .fine-box { background: #ffebee; color: #c62828; padding: 15px; border-radius: 4px; margin-bottom: 20px; font-size: 1.2em; text-align: center; font-weight: bold; }
+        .history-table { width: 100%; border-collapse: collapse; }
+        .history-table th, .history-table td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        .history-table th { background-color: #f5f5f5; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1><a href="/" style="color: white; text-decoration: none;">Thư viện Online</a></h1>
+        <div id="auth-links"></div>
+    </header>
+
+    <div class="profile-container">
+        <h2>Hồ sơ cá nhân</h2>
+        
+        <div id="fine-container" style="display: none;">
+            <div class="fine-box">
+                Bạn đang nợ tổng cộng: <span id="total-fines">0</span> VNĐ tiền phạt quá hạn.
+            </div>
+        </div>
+
+        <h3>Lịch sử mượn trả</h3>
+        <div style="overflow-x:auto;">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Sách</th>
+                        <th>Ngày mượn</th>
+                        <th>Hạn trả</th>
+                        <th>Ngày trả</th>
+                        <th>Phạt</th>
+                        <th>Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body">
+                    <!-- Data will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            checkAuth();
+            if (!localStorage.getItem('token')) {
+                window.location.href = '/login';
+                return;
+            }
+            await loadProfile();
+        });
+
+        async function loadProfile() {
+            try {
+                const data = await apiGet('/borrows/my-history');
+                
+                if (data.totalFines > 0) {
+                    document.getElementById('fine-container').style.display = 'block';
+                    document.getElementById('total-fines').innerText = data.totalFines.toLocaleString('vi-VN');
+                }
+
+                const tbody = document.getElementById('history-body');
+                tbody.innerHTML = '';
+                
+                if (!data.history || data.history.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Bạn chưa có lịch sử mượn sách nào.</td></tr>';
+                    return;
+                }
+
+                data.history.forEach(b => {
+                    const borrowDate = new Date(b.borrow_date).toLocaleDateString('vi-VN');
+                    const dueDate = b.due_date ? new Date(b.due_date).toLocaleDateString('vi-VN') : '-';
+                    const returnDate = b.return_date ? new Date(b.return_date).toLocaleDateString('vi-VN') : '-';
+                    
+                    let statusText = '';
+                    if (b.status === 'pending') statusText = '<span style="color: orange">Đang chờ duyệt</span>';
+                    else if (b.status === 'borrowed') statusText = '<span style="color: blue">Đang mượn</span>';
+                    else if (b.status === 'returned') statusText = '<span style="color: green">Đã trả</span>';
+                    else if (b.status === 'rejected') statusText = '<span style="color: red">Bị từ chối</span>';
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>
+                                <strong>${b.book_title}</strong>
+                            </td>
+                            <td>${borrowDate}</td>
+                            <td>${dueDate}</td>
+                            <td>${returnDate}</td>
+                            <td style="color: red">${b.penalty_fee > 0 ? b.penalty_fee.toLocaleString('vi-VN') + 'đ' : ''}</td>
+                            <td>${statusText}</td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error('Lỗi tải lịch sử:', error);
+            }
+        }
+    </script>
+</body>
+</html>

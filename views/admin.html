@@ -35,13 +35,15 @@
             <div class="form-group"><label>Tiêu đề</label><input type="text" id="ab-title" required></div>
             <div class="form-group"><label>Tác giả</label><input type="text" id="ab-author" required></div>
             <div class="form-group"><label>Mô tả</label><textarea id="ab-desc" rows="3"></textarea></div>
+            <div class="form-group"><label>Tổng số lượng (Copies)</label><input type="number" id="ab-copies" value="1" min="1" required></div>
+            <div class="form-group"><label>Ảnh bìa</label><input type="file" id="ab-cover" accept="image/*"></div>
             <button type="submit" class="btn btn-primary">Thêm sách mới</button>
         </form>
         
         <div style="overflow-x:auto;">
             <table id="admin-books-table">
                 <thead>
-                    <tr><th>ID</th><th>Tiêu đề</th><th>Tác giả</th><th>Lượt xem</th><th>Trạng thái</th><th>Hành động</th></tr>
+                    <tr><th>ID</th><th>Bìa</th><th>Tiêu đề</th><th>Tác giả</th><th>Lượt xem</th><th>Trong kho</th><th>Hành động</th></tr>
                 </thead>
                 <tbody></tbody>
             </table>
@@ -53,6 +55,28 @@
             <table id="admin-comments-table">
                 <thead>
                     <tr><th>Sách</th><th>Người đăng</th><th>Nội dung</th><th>Điểm</th><th>Hành động</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <hr style="margin: 30px 0;">
+        <h2>Quản lý Mượn/Trả sách</h2>
+        <div style="overflow-x:auto;">
+            <table id="admin-borrows-table">
+                <thead>
+                    <tr><th>ID</th><th>Người mượn</th><th>Sách</th><th>Ngày mượn</th><th>Hạn trả</th><th>Ngày trả</th><th>Phạt</th><th>Trạng thái</th><th>Hành động</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <hr style="margin: 30px 0;">
+        <h2>Quản lý Phân quyền Người dùng</h2>
+        <div style="overflow-x:auto;">
+            <table id="admin-users-table">
+                <thead>
+                    <tr><th>ID</th><th>Tên đăng nhập</th><th>Quyền hiện tại</th><th>Hành động</th></tr>
                 </thead>
                 <tbody></tbody>
             </table>
@@ -72,6 +96,8 @@
             loadStats();
             loadAdminBooks();
             loadAdminComments();
+            loadAdminBorrows();
+            loadAdminUsers();
         });
 
         async function loadStats() {
@@ -82,17 +108,20 @@
         }
 
         async function loadAdminBooks() {
-            const books = await apiGet('/books');
+            const response = await apiGet('/books?limit=1000');
+            const books = response.data || [];
             const tbody = document.querySelector('#admin-books-table tbody');
             tbody.innerHTML = '';
             books.forEach(b => {
+                const coverHtml = b.cover_image ? `<img src="${b.cover_image}" style="width: 50px; height: 70px; object-fit: cover;">` : 'Không có';
                 tbody.innerHTML += `
                     <tr>
                         <td>${b.id}</td>
+                        <td>${coverHtml}</td>
                         <td>${b.title}</td>
                         <td>${b.author}</td>
                         <td>${b.view_count}</td>
-                        <td>${b.status}</td>
+                        <td>${b.available_copies} / ${b.total_copies}</td>
                         <td>
                             <button class="btn btn-danger" onclick="deleteBook(${b.id})">Xóa</button>
                         </td>
@@ -120,14 +149,106 @@
             });
         }
 
+        async function loadAdminBorrows() {
+            const borrows = await apiGet('/admin/borrows');
+            const tbody = document.querySelector('#admin-borrows-table tbody');
+            tbody.innerHTML = '';
+            borrows.forEach(b => {
+                const borrowDate = new Date(b.borrow_date).toLocaleDateString('vi-VN');
+                const dueDate = b.due_date ? new Date(b.due_date).toLocaleDateString('vi-VN') : '-';
+                const returnDate = b.return_date ? new Date(b.return_date).toLocaleDateString('vi-VN') : '-';
+                
+                let statusText = '';
+                let actionHtml = '';
+                
+                if (b.status === 'pending') {
+                    statusText = '<span style="color: orange">Chờ duyệt</span>';
+                    actionHtml = `
+                        <button class="btn btn-primary" style="margin-right: 5px; font-size: 12px; padding: 4px 8px;" onclick="updateBorrowStatus(${b.id}, 'borrowed')">Duyệt</button>
+                        <button class="btn btn-danger" style="font-size: 12px; padding: 4px 8px;" onclick="updateBorrowStatus(${b.id}, 'rejected')">Từ chối</button>
+                    `;
+                } else if (b.status === 'borrowed') {
+                    statusText = '<span style="color: blue">Đang mượn</span>';
+                    actionHtml = `<button class="btn btn-success" style="font-size: 12px; padding: 4px 8px;" onclick="updateBorrowStatus(${b.id}, 'returned')">Xác nhận trả</button>`;
+                } else if (b.status === 'returned') {
+                    statusText = '<span style="color: green">Đã trả</span>';
+                } else if (b.status === 'rejected') {
+                    statusText = '<span style="color: red">Bị từ chối</span>';
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${b.id}</td>
+                        <td>${b.username}</td>
+                        <td>${b.book_title}</td>
+                        <td>${borrowDate}</td>
+                        <td>${dueDate}</td>
+                        <td>${returnDate}</td>
+                        <td style="color: red">${b.penalty_fee > 0 ? b.penalty_fee + 'đ' : ''}</td>
+                        <td>${statusText}</td>
+                        <td>${actionHtml}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function loadAdminUsers() {
+            const users = await apiGet('/admin/users');
+            const tbody = document.querySelector('#admin-users-table tbody');
+            const currentUser = JSON.parse(localStorage.getItem('user'));
+            
+            tbody.innerHTML = '';
+            if (users.message) {
+                console.error(users.message);
+                alert("Backend API báo lỗi: " + users.message + "\n\n(Lưu ý: Nếu lỗi 'Unknown column email', bạn cần tắt Terminal và CHẠY LẠI lệnh node server.js để server nhận code mới nhé!)");
+                return;
+            }
+            users.forEach(u => {
+                const isSelf = u.id === currentUser.id;
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${u.id}</td>
+                        <td>${u.username}</td>
+                        <td>${u.role}</td>
+                        <td>
+                            ${isSelf ? '<span style="color: gray;">(Bạn)</span>' : `
+                                <select onchange="changeUserRole(${u.id}, this.value)">
+                                    <option value="user" ${u.role === 'user' ? 'selected' : ''}>User</option>
+                                    <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
+                                </select>
+                            `}
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
         document.getElementById('add-book-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const title = document.getElementById('ab-title').value;
+            const author = document.getElementById('ab-author').value;
+            const desc = document.getElementById('ab-desc').value;
+            const copies = document.getElementById('ab-copies').value;
+            const fileInput = document.getElementById('ab-cover');
+            
+            let base64Image = null;
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                base64Image = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(file);
+                });
+            }
+
             await apiPost('/admin/books', {
-                title: document.getElementById('ab-title').value,
-                author: document.getElementById('ab-author').value,
-                description: document.getElementById('ab-desc').value,
-                status: 'available'
+                title: title,
+                author: author,
+                description: desc,
+                total_copies: copies,
+                cover_image: base64Image
             });
+            
             e.target.reset();
             loadAdminBooks();
             loadStats();
@@ -146,6 +267,26 @@
                 await apiDelete('/admin/comments/' + id);
                 loadAdminComments();
                 loadStats();
+            }
+        }
+
+        async function updateBorrowStatus(id, status) {
+            let msg = status === 'borrowed' ? 'Duyệt cho mượn sách?' : 
+                      status === 'rejected' ? 'Từ chối yêu cầu này?' : 
+                      'Xác nhận sách đã được trả?';
+            if(confirm(msg)) {
+                await apiPut('/admin/borrows/' + id, { status });
+                loadAdminBorrows();
+                loadAdminBooks();
+            }
+        }
+
+        async function changeUserRole(id, newRole) {
+            if(confirm(`Xác nhận đổi quyền người dùng này thành ${newRole.toUpperCase()}?`)) {
+                await apiPut('/admin/users/' + id + '/role', { role: newRole });
+                loadAdminUsers();
+            } else {
+                loadAdminUsers(); // reset select nếu cancel
             }
         }
     </script>

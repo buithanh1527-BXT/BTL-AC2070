@@ -18,8 +18,18 @@
 
     <div class="container">
         <h2>Danh sách Sách</h2>
+        
+        <div style="margin-bottom: 20px; display: flex; gap: 10px; justify-content: center;">
+            <input type="text" id="search-input" placeholder="Tìm kiếm sách hoặc tác giả..." style="padding: 10px; width: 300px; border-radius: 4px; border: 1px solid #ccc;">
+            <button class="btn btn-primary" onclick="searchBooks()">Tìm kiếm</button>
+        </div>
+
         <div id="book-list" class="book-grid">
             <!-- Sách sẽ load ở đây -->
+        </div>
+
+        <div id="pagination" style="margin-top: 20px; text-align: center; display: flex; justify-content: center; gap: 10px;">
+            <!-- Phân trang -->
         </div>
     </div>
 

@@ -45,6 +45,7 @@ function checkAuth() {
         const user = JSON.parse(userStr);
         document.getElementById('auth-links').innerHTML = `
             <span>Xin chào, ${user.username}</span> | 
+            <a href="/profile">Hồ sơ cá nhân</a> | 
             ${user.role === 'admin' ? '<a href="/admin">Trang Quản trị</a> | ' : ''}
             <a href="#" onclick="logout()">Đăng xuất</a>
         `;

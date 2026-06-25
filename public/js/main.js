@@ -37,20 +37,59 @@ function getCookie(name) {
     return null;
 }
 
+let currentPage = 1;
+let currentSearch = '';
+
 async function loadBooks() {
-    const books = await apiGet('/books');
+    const response = await apiGet(`/books?page=${currentPage}&q=${currentSearch}`);
+    const books = response.data || [];
     const container = document.getElementById('book-list');
     if (!container) return;
     
     container.innerHTML = '';
-    books.forEach(book => {
-        container.innerHTML += `
-            <div class="book-card">
-                <h3>${book.title}</h3>
-                <p>Tác giả: ${book.author}</p>
-                <p>Lượt xem: ${book.view_count}</p>
-                <a href="/book-detail?id=${book.id}" class="btn btn-primary">Xem Chi Tiết</a>
-            </div>
-        `;
-    });
+    if (books.length === 0) {
+        container.innerHTML = '<p style="text-align:center; width:100%;">Không tìm thấy sách nào.</p>';
+    } else {
+        books.forEach(book => {
+            const coverUrl = book.cover_image || 'https://via.placeholder.com/150x200?text=No+Cover';
+            container.innerHTML += `
+                <div class="book-card">
+                    <img src="${coverUrl}" alt="Cover" style="width: 100%; height: 200px; object-fit: cover; border-radius: 4px; margin-bottom: 10px;">
+                    <h3>${book.title}</h3>
+                    <p>Tác giả: ${book.author}</p>
+                    <p>Lượt xem: ${book.view_count}</p>
+                    <a href="/book-detail?id=${book.id}" class="btn btn-primary">Xem Chi Tiết</a>
+                </div>
+            `;
+        });
+    }
+
+    renderPagination(response.pagination);
+}
+
+function renderPagination(pagination) {
+    const pageContainer = document.getElementById('pagination');
+    if (!pageContainer) return;
+    
+    pageContainer.innerHTML = '';
+    if (!pagination || pagination.totalPages <= 1) return;
+
+    for (let i = 1; i <= pagination.totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.className = i === pagination.page ? 'btn btn-primary' : 'btn';
+        btn.style.padding = '5px 10px';
+        btn.innerText = i;
+        btn.onclick = () => {
+            currentPage = i;
+            loadBooks();
+        };
+        pageContainer.appendChild(btn);
+    }
+}
+
+function searchBooks() {
+    const query = document.getElementById('search-input').value;
+    currentSearch = encodeURIComponent(query);
+    currentPage = 1;
+    loadBooks();
 }

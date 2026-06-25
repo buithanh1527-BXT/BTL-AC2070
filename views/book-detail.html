@@ -18,6 +18,7 @@
         <p><strong>Lượt xem:</strong> <span id="b-views"></span></p>
         <p><strong>Trạng thái:</strong> <span id="b-status"></span></p>
         <p id="b-desc"></p>
+        <button id="btn-borrow" class="btn btn-primary" style="display:none; margin-top:10px;">Mượn sách</button>
         <hr>
         
         <h3>Bình luận & Đánh giá</h3>
@@ -63,6 +64,21 @@
             document.getElementById('b-views').innerText = book.view_count;
             document.getElementById('b-status').innerText = book.status === 'available' ? 'Có sẵn' : 'Đang mượn';
             document.getElementById('b-desc').innerText = book.description;
+
+            const btnBorrow = document.getElementById('btn-borrow');
+            if (book.status === 'available') {
+                btnBorrow.style.display = 'inline-block';
+                btnBorrow.onclick = async () => {
+                    const res = await apiPost('/borrows/' + bookId);
+                    if (res.ok) {
+                        alert('Mượn sách thành công!');
+                        window.location.reload();
+                    } else {
+                        const data = await res.json();
+                        alert(data.message || 'Có lỗi xảy ra, vui lòng đăng nhập trước khi mượn.');
+                    }
+                };
+            }
 
             loadComments(bookId);
         });
